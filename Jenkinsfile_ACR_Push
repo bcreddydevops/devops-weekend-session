@@ -1,0 +1,31 @@
+pipeline{
+    agent any
+    tools{
+        maven 'maven-3.8.5'
+    }
+    stages{
+        stage('checkout the code'){
+            steps{
+                git url:'https://github.com/bcreddydevops/devops-weekend-session.git', branch: 'main'
+            }
+        }
+        stage('build the code'){
+            steps{
+                sh 'mvn clean package'
+            }
+        }
+        stage('build the docker image from docker file'){
+            steps{
+                sh 'docker image build -t bcreddydevops.azurecr.io/devops-weekend-session:${BUILD_NUMBER} .'
+            }
+        }
+        stage('azure login and push the docker image to acr hub'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'Azure_ACR_Credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
+                sh 'docker login -u ${username} -p ${password} bcreddydevops.azurecr.io'
+                sh 'docker image push bcreddydevops.azurecr.io/devops-weekend-session:${BUILD_NUMBER} '
+                 }
+            }
+        }
+    }
+}
