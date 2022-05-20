@@ -1,0 +1,31 @@
+pipeline{
+    agent any
+    tools{
+        maven 'maven-3.8.5'
+    }
+    stages{
+        stage('checkout the code'){
+            steps{
+                git url:'https://github.com/bcreddydevops/devops-weekend-session.git', branch: 'main'
+            }
+        }
+        stage('build the code'){
+            steps{
+                sh 'mvn clean package'
+            }
+        }
+        stage('build the docker image from docker file'){
+            steps{
+                sh 'docker image build -t chinnareddaiah/devops-weekend-session:${BUILD_NUMBER} .'
+            }
+        }
+        stage('docker login and push the docker image to docker hub'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'Dockerhub_Credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
+                sh 'docker login -u ${username} -p ${password} https://index.docker.io/v1/'
+                sh 'docker image push chinnareddaiah/devops-weekend-session:${BUILD_NUMBER} '
+                 }
+            }
+        }
+    }
+}
